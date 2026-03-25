@@ -27,7 +27,7 @@ app.post('/contact', async (req, res) => {
   try {
     await resend.emails.send({
       from: "FinPulse <onboarding@resend.dev>",
-      to: "maybansalexams@gmail.com",
+      to: "maybansal2021@gmail.com",
       subject: "New Contact Form",
       html: `
         <h3>New Contact Request</h3>
