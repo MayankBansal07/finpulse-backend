@@ -26,8 +26,8 @@ app.post('/contact', async (req, res) => {
 
   try {
     await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: process.env.EMAIL_USER,
+      from: "FinPulse <onboarding@resend.dev>",
+      to: "maybansalexams@gmail.com",
       subject: "New Contact Form",
       html: `
         <h3>New Contact Request</h3>
@@ -36,6 +36,19 @@ app.post('/contact', async (req, res) => {
         <p><b>Message:</b> ${message}</p>
       `
     });
+    await resend.emails.send({
+    from: "FinPulse <onboarding@resend.dev>",
+    to: email,
+    subject: "We received your request",
+    html: `
+      <h3>Hello ${name},</h3>
+      <p>We received your message:</p>
+      <p>"${message}"</p>
+      <br/>
+      <p>We will contact you soon.</p>
+      <p><b>FinPulse Team</b></p>
+    `
+  });
 
     res.json({ success: true });
 
