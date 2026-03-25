@@ -54,18 +54,21 @@ FinPulse Team
 `;
 
     try {
-        await transporter.sendMail({
-            from: `"FinPulse" <${process.env.EMAIL_USER}>`, 
-            to: email,
-            subject: "We received your request",
-            text: autoMessage
-        });
+  const info = await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: process.env.EMAIL_USER,
+    subject: "New Contact Form",
+    text: `Name: ${name}, Email: ${email}, Message: ${message}`
+  });
 
-        res.json({ message: "Email sent successfully" });
-    } catch (error) {
-        console.error("Email sending failed:", error);
-        res.status(500).json({ message: "Email failed" });
-    }
+  console.log("Email sent:", info.response);
+
+  res.json({ success: true });
+
+} catch (error) {
+  console.error("FULL ERROR:", error);  // 👈 VERY IMPORTANT
+  res.status(500).json({ error: error.message });
+}
 });
 
 app.listen(PORT, () => {
