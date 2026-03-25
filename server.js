@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require("nodemailer");
+require('dotenv').config(); // 👈 Added to load .env variables
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -18,17 +19,17 @@ app.get("/", (req, res) => {
 // Configure Nodemailer Transporter
 // Use environment variables for security in production
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  service: 'gmail', // 👈 Simpler way for Gmail
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
   }
 });
+
+// Check if variables are set
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  console.warn("⚠️  EMAIL_USER or EMAIL_PASS not set in environment variables!");
+}
 
 app.post('/contact', async (req, res) => {
     const { name, email, message } = req.body;
