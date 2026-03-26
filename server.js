@@ -19,8 +19,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
   },
-  logger: true,   // log to console
-  debug: true     // include SMTP conversation
+  // logger: true,   // log to console
+  // debug: true     // include SMTP conversation
+  family: 4 // Use IPv4 to avoid potential IPv6 issues
 });
 
 
@@ -77,7 +78,10 @@ console.log("Customer mail sent:", info.messageId);
     res.status(500).json({ error: error.message });
   }
 });
-
+// Health check route
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
