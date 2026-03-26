@@ -6,7 +6,11 @@ const nodemailer = require('nodemailer');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: "*" }));
+app.use(cors({
+  origin: "https://finpulse-frontend.vercel.app",  // ✅ your Vercel frontend
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 app.use(express.json());
 
 // Configure SMTP transporter for Gmail (587 with TLS)
