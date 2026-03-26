@@ -9,16 +9,20 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// Configure SMTP transporter
+// Configure SMTP transporter for Gmail (587 with TLS)
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_SECURE === "true", // true for 465, false for 587
+  secure: false,
+  requireTLS: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
-  }
+  },
+  logger: true,   // log to console
+  debug: true     // include SMTP conversation
 });
+
 
 app.get("/", (req, res) => {
   res.send("Backend is live");
@@ -34,33 +38,37 @@ app.post('/contact', async (req, res) => {
   console.log("New submission:", name, email);
 
   try {
-    // Email to you
+    // 1. Admin notification
     await transporter.sendMail({
-      from: `"FinPulse" <${process.env.SMTP_USER}>`,
-      to: "maybansal2021@gmail.com",
-      subject: "New Contact Form",
-      html: `
-        <h3>New Contact Request</h3>
-        <p><b>Name:</b> ${name}</p>
-        <p><b>Email:</b> ${email}</p>
-        <p><b>Message:</b> ${message}</p>
-      `
-    });
+  from: process.env.SMTP_USER,        // ✅ must match your Gmail login
+  to: process.env.SMTP_USER,          // ✅ admin notification goes to your Gmail
+  replyTo: email,                     // ✅ lets you reply directly to the customer
+  subject: "New Contact Form",
+  text: `New request from ${name} (${email}): ${message}`, // plain text fallback
+  html: `
+    <h3>New Contact Request</h3>
+    <p><b>Name:</b> ${name}</p>
+    <p><b>Email:</b> ${email}</p>
+    <p><b>Message:</b> ${message}</p>
+  `
+});
 
-    // Confirmation email to user
-    await transporter.sendMail({
-      from: `"FinPulse" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "We received your request",
-      html: `
-        <h3>Hello ${name},</h3>
-        <p>We received your message:</p>
-        <p>"${message}"</p>
-        <br/>
-        <p>We will contact you soon.</p>
-        <p><b>FinPulse Team</b></p>
-      `
-    });
+    const info = await transporter.sendMail({
+  from: process.env.SMTP_USER,        // ✅ must match your Gmail login
+  to: email,                          // ✅ customer’s email
+  replyTo: process.env.SMTP_USER,     // ✅ replies come back to you
+  subject: "FinPulse – Consultation Request Received",
+  text: `Hello ${name}, we received your message: "${message}". We'll contact you soon.`,
+  html: `
+    <h3>Hello ${name},</h3>
+    <p>We received your message:</p>
+    <p>"${message}"</p>
+    <br/>
+    <p>We will contact you soon.</p>
+    <p><b>FinPulse Team</b></p>
+  `
+});
+console.log("Customer mail sent:", info.messageId);
 
     res.json({ success: true });
 
