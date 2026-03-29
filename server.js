@@ -2,9 +2,16 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const nodemailer = require('nodemailer');
+const connectDB = require('./config/db');
+const Consultation = require('./models/Consultation');
+const User = require('./models/User'); // Added for seeding
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+connectDB();
 
 app.use(cors({
   origin: "https://finpulse-frontend.vercel.app",  // ✅ your Vercel frontend
@@ -12,6 +19,10 @@ app.use(cors({
   allowedHeaders: ["Content-Type"]
 }));
 app.use(express.json());
+
+// Main Data Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Configure SMTP transporter for Gmail (587 with TLS)
 const transporter = nodemailer.createTransport({
@@ -43,6 +54,15 @@ app.post('/contact', async (req, res) => {
   console.log("New submission:", name, email);
 
   try {
+    // 0. Save Consultation Request to Database
+    await Consultation.create({
+      name,
+      email,
+      phone: req.body.phone || '',
+      service: req.body.service || '',
+      message
+    });
+
     // 1. Admin notification
     await transporter.sendMail({
   from: process.env.SMTP_USER,        // ✅ must match your Gmail login
@@ -86,6 +106,26 @@ console.log("Customer mail sent:", info.messageId);
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
-app.listen(PORT, () => {
+
+// Seed an initial Admin user if none exists
+const seedAdmin = async () => {
+  try {
+    const adminExists = await User.findOne({ role: 'admin' });
+    if (!adminExists) {
+      await User.create({
+        name: 'Super Admin',
+        email: process.env.SMTP_USER || 'admin@finpulse.com',
+        password: 'AdminPassword123!', 
+        role: 'admin'
+      });
+      console.log("Default Admin created. Email: Use your SMTP_USER or admin@finpulse.com. Password: AdminPassword123!");
+    }
+  } catch (error) {
+    console.error("Failed to seed admin:", error.message);
+  }
+};
+
+app.listen(PORT, async () => {
+  await seedAdmin(); // Check for admin right when server starts
   console.log(`Server running on port ${PORT}`);
 });
